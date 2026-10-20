@@ -1,4 +1,4 @@
-name: main-check
+name: main-checkS
 on:
   pull_request:
     branches: [main]
