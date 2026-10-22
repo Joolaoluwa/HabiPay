@@ -1,0 +1,27 @@
+name: PR Branch Protection
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-pr-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify PR targets main only from develop
+        if: github.base_ref == 'main'
+        run: |
+          if [ "${{ github.head_ref }}" != "develop" ]; then
+            echo "PRs into main must come from the develop branch only."
+            exit 1
+          fi
+
+      - name: Verify PR targets develop only from feature branches
+        if: github.base_ref == 'develop'
+        run: |
+          if [[ ! "${{ github.head_ref }}" == feature/* ]]; then
+            echo "PRs into develop must come from a feature/* branch only."
+            exit 1
+          fi
