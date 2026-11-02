@@ -39,9 +39,9 @@ export const tenantProfiles = pgTable('tenant_profiles', {
 
   // Employment
   employment_status: employmentStatusEnum('employment_status').notNull(),
-  employer_name: text('employer_name'), // nullable — students/unemployed have none
-  monthly_income: decimal('monthly_income', { precision: 15, scale: 2 }), // nullable — not all tenants have fixed income
-  salary_payment_bank: varchar('salary_payment_bank', { length: 100 }), // nullable
+  employer_name: text('employer_name'),
+  monthly_income: decimal('monthly_income', { precision: 15, scale: 2 }),
+  salary_payment_bank: varchar('salary_payment_bank', { length: 100 }),
 
   // Address
   residential_address: text('residential_address').notNull(),

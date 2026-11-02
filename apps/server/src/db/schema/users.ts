@@ -5,7 +5,6 @@ import {
   varchar,
   timestamp,
   boolean,
-  text
 } from 'drizzle-orm/pg-core';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -28,12 +27,12 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
 
   // Identity
-  fullName: text('fullName').notNull(),
+  full_name: varchar('full_name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
-  phoneNumber: varchar('phoneNumber', { length: 11 }).notNull().unique(),
+  phone_number: varchar('phone_number', { length: 20 }).notNull().unique(),
 
   // Auth
-  password: varchar('password', { length: 255 }).notNull(),
+  password_hash: varchar('password_hash', { length: 255 }).notNull(),
 
   // Role & Status
   role: userRoleEnum('role').notNull().default('tenant'),
@@ -41,12 +40,12 @@ export const users = pgTable('users', {
 
   // KYC — stored encrypted (AES-256 via utils/encryption.ts)
   // Raw BVN/NIN are never stored in plaintext
-  bvn: varchar('bvn', { length: 25 }),
-  nin: varchar('nin', { length: 25 }),
+  bvn_encrypted: varchar('bvn_encrypted', { length: 512 }),
+  nin_encrypted: varchar('nin_encrypted', { length: 512 }),
 
   // Verification flags — flipped to true after service verification (future)
-  bvn_verified: boolean('bvn').notNull().default(false),
-  nin_verified: boolean('nin').notNull().default(false),
+  bvn_verified: boolean('bvn_verified').notNull().default(false),
+  nin_verified: boolean('nin_verified').notNull().default(false),
 
   // Timestamps
   created_at: timestamp('created_at').notNull().defaultNow(),
@@ -55,6 +54,5 @@ export const users = pgTable('users', {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-// Use these types across the codebase instead of raw SQL types
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
