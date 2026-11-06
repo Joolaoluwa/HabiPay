@@ -3,6 +3,7 @@
 // Add each new schema file here as it is created.
 
 export * from "./users";
+export * from "./otps";
 export * from "./tenant-profiles";
 export * from "./landlords";
 export * from "./properties";

@@ -36,7 +36,7 @@ export const landlords = pgTable('landlords', {
   account_name: varchar('account_name', { length: 255 }).notNull(),
 
   // Verification — admin must verify bank details before payout can be triggered
-  verification_status: landlordVerificationStatusEnum('verification_status')
+  verification_status: landlordVerificationStatusEnum('landlord_verification_status')
     .notNull()
     .default('unverified'),
 

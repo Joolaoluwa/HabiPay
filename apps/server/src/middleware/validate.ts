@@ -14,6 +14,7 @@ export const validate =
       });
     }
 
-    req.body = result.data; // cleaned data (trimmed, lowercased, phone normalised)
+    // Replaces req.body with cleaned data (trimmed, lowercased, phone normalised)
+    req.body = result.data;
     return next();
   };

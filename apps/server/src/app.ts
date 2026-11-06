@@ -39,7 +39,7 @@ app.get("/health", async (_req: Request, res: Response) => {
 // ─── API Routes ────────────────────────────────────────────────────────────────
 // Routes will be registered here as modules are built
 // e.g. app.use('/api/auth', authRoutes);
-app.use("/api/v1/auth/signup", authRouter);
+app.use("/api/v1/auth", authRouter);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {

@@ -15,6 +15,13 @@
       "when": 1793463185819,
       "tag": "0001_broken_vargas",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793811815892,
+      "tag": "0002_yellow_silver_fox",
+      "breakpoints": true
     }
   ]
 }
