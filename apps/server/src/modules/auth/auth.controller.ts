@@ -226,7 +226,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     // 4. Issue access token via service
     const accessToken = signAccessToken({
-      sub: user.id,
+      id: user.id,
       role: user.role,
       status: user.status,
     });

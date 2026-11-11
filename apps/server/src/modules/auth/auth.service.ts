@@ -4,7 +4,7 @@ import { env } from "../../config/env";
 // ─── Token Payload ─────────────────────────────────────────────────────────────
 // Shape of the data encoded inside every access token
 export interface TokenPayload {
-  sub: string;   // user UUID
+  id: string;   // user UUID
   role: string;  // tenant | landlord | admin
   status: string;
 }
@@ -21,3 +21,4 @@ export function signAccessToken(payload: TokenPayload): string {
 export function verifyAccessToken(token: string): TokenPayload {
   return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 }
+

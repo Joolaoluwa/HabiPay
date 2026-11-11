@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { verifyAccessToken } from '../modules/auth/auth.service';
 import { env } from '../config/env'; // adjust to your env module
-import { AppError } from '../utils/apperror'
+import { AppError } from '../utils/appresponse'
 
 const Role = ['tenant','landlord','admin'];
 
@@ -22,7 +22,7 @@ export const selfOrAdmin =
   (param = 'id') =>
   (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) return next(new AppError(401, 'Authentication required'));
-    if (req.user.role === 'admin' || req.user.sub === req.params[param]) {
+    if (req.user.role === 'admin' || req.user.id === req.params[param]) {
       return next();
     }
     return next(new AppError(403, 'You do not have permission to do this'));
