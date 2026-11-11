@@ -8,6 +8,7 @@ on:
 
 jobs:
   check-pr-source:
+    name: Checks for merging
     runs-on: ubuntu-latest
     steps:
       - name: Verify PR targets main only from develop
