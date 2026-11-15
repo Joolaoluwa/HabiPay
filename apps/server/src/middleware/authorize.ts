@@ -1,7 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { verifyAccessToken } from '../modules/auth/auth.service';
-import { env } from '../config/env'; // adjust to your env module
 import { AppError } from '../utils/appresponse'
 
 const Role = ['tenant','landlord','admin'];

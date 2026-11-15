@@ -13,7 +13,7 @@ const envSchema = z.object({
 
   // Auth
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-  JWT_EXPIRES_IN: z.string().default('7d'),
+  JWT_EXPIRES_IN: z.string().default('15m'),
 
   // Mailer
   GMAIL_USER: z.string().email('GMAIL_USER must be a valid email'),

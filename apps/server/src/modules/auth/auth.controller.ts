@@ -12,7 +12,7 @@ import type {
   ResetPasswordInput,
 } from "./auth.types";
 import { eq, and, isNull } from "drizzle-orm";
-import { signAccessToken } from "./auth.service";
+import { issueRefreshToken, signAccessToken, rotateRefreshToken, revokeRefreshTokenFamily } from "./auth.service";
 import {
   generateOtp,
   hashOtp,
@@ -20,6 +20,7 @@ import {
   getOtpExpiry,
   sendOtpEmail,
 } from "../../utils/otp";
+import { AppError } from "../../utils/appresponse";
 
 const BCRYPT_COST = 12;
 const MAX_OTP_ATTEMPTS = 5;
@@ -205,6 +206,11 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // 3. Compare password
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
     // 2. Check account status before allowing login
     if (user.status === "suspended") {
       return res.status(403).json({
@@ -218,11 +224,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    // 3. Compare password
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid email or password" });
-    }
+
 
     // 4. Issue access token via service
     const accessToken = signAccessToken({
@@ -231,10 +233,12 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       status: user.status,
     });
 
+    const refreshToken = await issueRefreshToken(user.id);
     // 5. Return token and safe user object — no password_hash ever leaves the server
     return res.status(200).json({
       message: "Login successful",
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         full_name: user.full_name,
@@ -249,6 +253,45 @@ export async function login(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export async function refresh(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { refreshToken } = req.body as { refreshToken?: string };
+
+    if (!refreshToken || typeof refreshToken !== "string") {
+      return next(new AppError(400, "Refresh token is required"));
+    }
+
+    // 1. Validate the token, revoke it, issue the next one in the same family
+    const { userId, refreshToken: newRefreshToken } =
+      await rotateRefreshToken(refreshToken);
+
+    // 2. Load current role/status from the database, not from any old claims
+    const [user] = await db
+      .select({ id: users.id, role: users.role, status: users.status })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user || user.status === "suspended" || user.status === "pending") {
+      return next(new AppError(401, "Account not available"));
+    }
+
+    // 3. Sign a fresh access token
+    const accessToken = signAccessToken({
+      id: user.id,
+      role: user.role,
+      status: user.status,
+    });
+
+    return res.status(200).json({
+      success: true,
+      accessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
 // ─── Resend OTP ───────────────────────────────────────────────────────────────
 export async function resendOtpHandler(
   req: Request,
@@ -472,6 +515,23 @@ export async function resetPasswordHandler(
     return res.status(200).json({
       message: "Password reset successfully. You can now log in.",
     });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+export async function logout(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { refreshToken } = req.body as { refreshToken?: string };
+
+    if (!refreshToken || typeof refreshToken !== "string") {
+      return next(new AppError(400, "Refresh token is required"));
+    }
+
+    await revokeRefreshTokenFamily(refreshToken);
+
+    // Same response whether or not the token existed
+    return res.status(200).json({ success: true, message: "Logged out" });
   } catch (err) {
     return next(err);
   }

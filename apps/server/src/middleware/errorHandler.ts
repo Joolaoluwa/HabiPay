@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction} from 'express'
-import { AppError } from '../utils/apperror'
+import { AppError } from '../utils/appresponse'
 
 export function notFoundHandler(req: Request, next: NextFunction){
     return next(new AppError(404, `Route not found: {req.method} {req.OriginalUrl}`));

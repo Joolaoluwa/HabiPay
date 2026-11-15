@@ -15,6 +15,8 @@ import {
   resendOtpHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
+  refresh,
+  logout
 } from "./auth.controller";
 
 export const authRouter = Router();
@@ -25,3 +27,5 @@ authRouter.post("/resend-otp", validate(resendOtpSchema), resendOtpHandler);
 authRouter.post("/forgot-password", validate(forgotPasswordSchema), forgotPasswordHandler);
 authRouter.post("/reset-password", validate(resetPasswordSchema), resetPasswordHandler);
 authRouter.post("/login", validate(loginSchema), login);
+authRouter.post("/refresh", refresh);
+authRouter.post("/logout", logout);

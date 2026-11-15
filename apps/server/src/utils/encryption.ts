@@ -4,8 +4,7 @@ import { env } from '../config/env'; // adjust to your env module
 const ALGORITHM = 'aes-256-gcm';
 const VERSION = 'v1'; // lets you rotate keys later without breaking old rows
 
-const key = Buffer.from(env.ENCRYPTION_KEY, 'base64');
-if (key.length !== 32) throw new Error('ENCRYPTION_KEY must be 32 bytes (base64)');
+const key = Buffer.from(env.ENCRYPTION_KEY, 'hex');
 
 // `context` ties the ciphertext to its owner, e.g. `${userId}:bvn`,
 // so a value copied into another row or field fails to decrypt.
@@ -19,7 +18,7 @@ export function encryptField(plaintext: string, context: string): string {
 }
 
 export function decryptField(payload: string, context: string): string {
-  const [version, iv, tag, ciphertext] = payload.split(':');
+  const [version, iv, tag, ciphertext] = payload!.split(':');
   if (version !== VERSION || !iv || !tag || !ciphertext) {
     throw new Error('Unsupported encrypted payload');
   }
