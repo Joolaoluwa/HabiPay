@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../../config/db";
 import { landlords, users } from "../../db/schema";
-import { CreateLandlordBody, landLordType, Verify, validateLandlordBody, updateLandlordBody } from "./landlord.types";
+import { CreateLandlordBody, validateLandlordBody, updateLandlordBody } from "./landlord.types";
 import { TokenPayload } from "../auth/auth.service";
 import { encryptField, decryptField, maskIdNumber } from "../../utils/encryption";
 import { AppError } from "../../utils/appresponse";
