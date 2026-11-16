@@ -30,7 +30,7 @@ export function verifyAccessToken(token: string): TokenPayload {
 
 const hashToken = (t: string) => crypto.createHash("sha256").update(t).digest("hex");
 
-export async function issueRefreshToken(userId: string, familyId = crypto.randomUUID()) {
+export async function issueRefreshToken(userId: string, familyId: string = crypto.randomUUID()) {
   const token = crypto.randomBytes(48).toString("hex"); // sent to the client
   await db.insert(refreshTokens).values({
     userId,
