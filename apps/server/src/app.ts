@@ -5,6 +5,8 @@ import morgan from "morgan";
 import { db } from "./config/db";
 import { sql } from "drizzle-orm";
 import { authRouter } from "./modules/auth/auth.routes";
+import { userRouter } from "./modules/users/users.routes";
+import { landLordRouter } from "./modules/landlords/landlord.routes";
 
 const app = express();
 
@@ -39,7 +41,9 @@ app.get("/health", async (_req: Request, res: Response) => {
 // ─── API Routes ────────────────────────────────────────────────────────────────
 // Routes will be registered here as modules are built
 // e.g. app.use('/api/auth', authRoutes);
-app.use("/api/v1/auth/signup", authRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1", userRouter);
+app.use("/api/v1", landLordRouter);
 
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
