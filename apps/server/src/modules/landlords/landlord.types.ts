@@ -26,18 +26,6 @@ export const updateLandlordSchema = z
     verification_status: z.enum(['unverified', 'pending', 'verified', 'rejected'], "verification only exists withing the bounds of verified, pending, rejected and unverified").optional()
   }).strict()
 
-enum Verify{
-  Unverified = "unverified", 
-  Pending = "pending",
-  Verified = "verified",
-  Rejected = "rejected"
-}
-export type landLordType = {
-    bank_name: string,
-    account_name: string,
-    bank_account_number: string,
-    verification_status: Verify
-}
 export type updateLandlordBody = z.infer<typeof updateLandlordSchema>;
 export type CreateLandlordBody = z.infer<typeof createLandlordSchema>;
 export type validateLandlordBody = z.infer<typeof validateLandlordSchema>;
