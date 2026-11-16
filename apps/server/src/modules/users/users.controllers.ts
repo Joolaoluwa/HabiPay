@@ -61,7 +61,8 @@ export async function getAllUsers(req: Request, res: Response){
     .limit(limit)
     .offset(offset);
 
-  const [{ total }] = await db.select({ total: count() }).from(users);
+const [row] = await db.select({ total: count() }).from(users);
+const total = row?.total ?? 0;
 
   return res.status(200).json({
     success: true,
