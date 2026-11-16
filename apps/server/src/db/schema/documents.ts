@@ -12,8 +12,7 @@ export const documentTypeEnum = pgEnum("document_type", [
 ]);
 
 // The doc gives no values for verification_status
-// Kept local to this table (not exported)
-const verificationStatusEnum = pgEnum("verification_status", [
+export const verificationStatusEnum = pgEnum("verification_status", [
   "pending",
   "verified",
   "rejected",

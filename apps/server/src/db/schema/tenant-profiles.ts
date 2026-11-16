@@ -47,7 +47,7 @@ export const tenantProfiles = pgTable('tenant_profiles', {
   residential_address: text('residential_address').notNull(),
 
   // Verification
-  verification_status: tenantVerificationStatusEnum('verification_status')
+  verification_status: tenantVerificationStatusEnum('tenant_verification_status')
     .notNull()
     .default('unverified'),
 
