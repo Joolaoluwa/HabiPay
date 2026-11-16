@@ -1,1 +1,29 @@
+name: HabiPay-CI
 
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+    buildandstart:
+        name: build
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: apps/server
+        steps:
+            - name: checks out the repository
+              uses: actions/checkout@v4
+
+            - name: Set up node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: "20"
+                cache: "npm"
+                cache-dependency-path: apps/server/package-lock.json
+            - name: Install the packages
+              run: npm ci
+            - name: Run the build
+              run: npm run build
