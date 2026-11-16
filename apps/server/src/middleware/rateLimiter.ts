@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
-import { AppError } from '../utils/apperror';
+import { AppError } from '../utils/appresponse';
 
 const isProd = process.env.NODE_ENV === 'production';
 
