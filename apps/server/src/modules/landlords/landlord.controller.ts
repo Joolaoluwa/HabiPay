@@ -2,13 +2,15 @@ import { Request, Response, NextFunction } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../../config/db";
 import { landlords, users } from "../../db/schema";
-import { CreateLandlordBody, validateLandlordBody, updateLandlordBody } from "./landlord.types";
+import { CreateLandlordBody, validateLandlordBody, updateLandlordBody, AdminId } from "./landlord.types";
 import { TokenPayload } from "../auth/auth.service";
-import { encryptField, decryptField, maskIdNumber } from "../../utils/encryption";
+import { encryptField, decryptField, maskIdNumber, accountContext } from "../../utils/encryption";
 import { AppError } from "../../utils/appresponse";
+import { resolveBankAccount } from "./landlord.service";
+import { namesMatch } from "../../utils/names-match";
 
 export async function CreateLandlord(req: Request, res: Response, next: NextFunction){
-    const {bank_name, bank_account_number, account_name} = req.body as CreateLandlordBody;
+    const {bank_name, bank_account_number, account_name, bank_code} = req.body as CreateLandlordBody;
     const requester = req.user as TokenPayload;
     const userId = requester.id!
 
@@ -34,7 +36,7 @@ export async function CreateLandlord(req: Request, res: Response, next: NextFunc
           .status(409)
           .json({ success: false, message: "Landlord record already exists" });
       }
-      const encryptAccountNumber = encryptField(bank_account_number, `${userId}:bank_account_number`)
+      const encryptAccountNumber = encryptField(bank_account_number, accountContext(userId))
       const [created] = await db
         .insert(landlords)
         .values({
@@ -42,6 +44,7 @@ export async function CreateLandlord(req: Request, res: Response, next: NextFunc
           bank_name: bank_name,
           bank_account_number: encryptAccountNumber,
           account_name: account_name,
+          bank_code: bank_code,
         })
         .returning();
 
@@ -53,6 +56,7 @@ export async function CreateLandlord(req: Request, res: Response, next: NextFunc
         phone_number: user.phone_number,
         bank_name: created!.bank_name,
         account_name: created!.account_name,
+        bank_code: bank_code,
       };
 
         return res.status(201).json({ success: true, data });
@@ -85,6 +89,7 @@ export async function getLandlordById(req:Request, res: Response, next: NextFunc
         bank_account_number: landlords.bank_account_number, // encrypted, masked below
         account_name: landlords.account_name,
         verification_status: landlords.verification_status,
+        bank_code: landlords.bank_code,
         created_at: landlords.created_at,
         updated_at: landlords.updated_at,
         full_name: users.full_name,
@@ -107,7 +112,7 @@ export async function getLandlordById(req:Request, res: Response, next: NextFunc
 
     const accountNumber = decryptField(
       row.bank_account_number,
-      `${userId}:bank_account_number`
+      accountContext(row.user_id)
     );
 
     return res.status(200).json({
@@ -120,7 +125,7 @@ export async function getLandlordById(req:Request, res: Response, next: NextFunc
 }
 
 export async function updateLandlordById(req:Request, res: Response, next: NextFunction){
-  let {bank_name, bank_account_number, account_name, verification_status} = req.body as updateLandlordBody;
+  let {bank_name, bank_account_number, account_name, verification_status, bank_code} = req.body as updateLandlordBody;
 
   const {id} = req.params as validateLandlordBody
   const requester = req.user as TokenPayload;
@@ -155,7 +160,7 @@ export async function updateLandlordById(req:Request, res: Response, next: NextF
     const touchesBankDetails =
       bank_name !== undefined ||
       bank_account_number !== undefined ||
-      account_name !== undefined;
+      account_name !== undefined || bank_code !== undefined;
 
       if (touchesBankDetails && verification_status === undefined) {
       verification_status = "unverified";
@@ -166,7 +171,7 @@ export async function updateLandlordById(req:Request, res: Response, next: NextF
       .update(landlords)
       .set({
         bank_account_number: 
-          bank_account_number !== undefined ? encryptField(bank_account_number, `${userId}:bank_account_number`) : undefined,
+          bank_account_number !== undefined ? encryptField(bank_account_number, accountContext(landlord.user_id)) : undefined,
         bank_name: bank_name,
         account_name: account_name,
         verification_status: verification_status
@@ -183,11 +188,88 @@ export async function updateLandlordById(req:Request, res: Response, next: NextF
     
     if (!updated) return next(new AppError(404, "Landlord not found"));
     const accountNumber = decryptField(
-      updated!.bank_account_number, `${userId}:bank_account_number`
+      updated!.bank_account_number, accountContext(landlord.user_id)
     )
 
     return res.status(200).json({
       success: true,
       data: { ...updated, bank_account_number: maskIdNumber(accountNumber) },
     });
+}
+
+export async function verifyLandlord(req: Request, res: Response, next: NextFunction){
+  const {id} = req.params as AdminId;
+
+    const requester = req.user as TokenPayload;
+    const isAdmin = requester.role === "admin";
+try{
+    const [landlord] = await db
+      .select({
+        id: landlords.id,
+        user_id: landlords.user_id,
+        bank_code: landlords.bank_code,
+        bank_account_number: landlords.bank_account_number,
+        account_name: landlords.account_name,
+        verification_status: landlords.verification_status,
+      })
+      .from(landlords)
+      .where(eq(landlords.id, id))
+      .limit(1);
+
+    if (!landlord) return next(new AppError(404, "Landlord not found"));
+
+    if (!isAdmin && landlord.user_id !== requester.id) {
+      return next(new AppError(404, "Landlord not found"));
+    }
+
+    if (landlord.verification_status === "verified") {
+      return res.status(200).json({
+        success: true,
+        message: "Bank details are already verified",
+        data: { id: landlord.id, verification_status: landlord.verification_status },
+      });
+    }
+
+    if (!landlord.bank_code) {
+      return next(new AppError(400, "Add a bank code before verifying"));
+    }
+
+    // Decrypt the STORED value and send it to Paystack. Never log it.
+    const accountNumber = decryptField(
+      landlord.bank_account_number,
+      accountContext(landlord.user_id)
+    );
+
+    const resolved = await resolveBankAccount(accountNumber, landlord.bank_code);
+
+    const status = namesMatch(landlord.account_name, resolved.account_name)
+      ? "verified"
+      : "pending";
+
+    const [updated] = await db
+      .update(landlords)
+      .set({ verification_status: status, updated_at: new Date() })
+      .where(eq(landlords.id, id))
+      .returning({
+        id: landlords.id,
+        bank_name: landlords.bank_name,
+        bank_code: landlords.bank_code,
+        account_name: landlords.account_name,
+        verification_status: landlords.verification_status,
+        updated_at: landlords.updated_at,
+      });
+
+    if (!updated) return next(new AppError(404, "Landlord not found"));
+
+    return res.status(200).json({
+      success: true,
+      message:
+        status === "verified"
+          ? "Bank details verified"
+          : "The account name did not match. Your details have been sent for review.",
+      data: updated,
+    });
+  } catch (err) {
+    return next(err);
+  }
 }
