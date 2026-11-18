@@ -9,7 +9,6 @@ export const authorize =
   (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) return next(new AppError(401, 'Authentication required'));
     if (!allowed.includes(req.user.role)) {
-      console.log(req.user.role)
       return next(new AppError(403, 'You do not have permission to do this'));
     }
     return next();
