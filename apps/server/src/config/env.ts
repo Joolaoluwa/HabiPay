@@ -23,6 +23,8 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z
     .string()
     .length(64, 'ENCRYPTION_KEY must be a 64-character hex string (32 bytes)'),
+  // Paystack_SK
+  PAYSTACK_SK: z.string("Api key required")
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -32,13 +32,15 @@ export const landlords = pgTable('landlords', {
   // bank_account_number is encrypted (AES-256 via utils/encryption.ts)
   // Raw account numbers are never stored in plaintext
   bank_name: varchar('bank_name', { length: 100 }).notNull(),
-  bank_account_number: varchar('bank_account_number', { length: 11 }).notNull(),
+  bank_account_number: varchar('bank_account_number', { length: 512 }).notNull(),
   account_name: varchar('account_name', { length: 255 }).notNull(),
 
   // Verification — admin must verify bank details before payout can be triggered
   verification_status: landlordVerificationStatusEnum('landlord_verification_status')
     .notNull()
     .default('unverified'),
+  // Bank code is added for adding a layer of direction for the user
+  bank_code: varchar("bank_code", {length: 10}),
 
   // Timestamps
   created_at: timestamp('created_at').notNull().defaultNow(),
