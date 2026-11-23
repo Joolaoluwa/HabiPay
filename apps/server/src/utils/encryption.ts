@@ -34,3 +34,5 @@ export function decryptField(payload: string, context: string): string {
 // What API responses may show: *******1234
 export const maskIdNumber = (value: string) =>
   `${'*'.repeat(Math.max(value.length - 4, 0))}${value.slice(-4)}`;
+
+export const accountContext = (ownerUserId: string) => `${ownerUserId}:bank_account_number`;
