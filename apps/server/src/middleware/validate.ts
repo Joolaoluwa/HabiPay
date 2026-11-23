@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { ZodType } from "zod";
 
+type Source = "body" | "query" | "params";
+
 export const validate =
-  (schema: ZodType) => (req: Request, res: Response, next: NextFunction) => {
-    const result = schema.safeParse(req.body);
+  (schema: ZodType, source: Source = "body") =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req[source]);
     if (!result.success) {
       return res.status(400).json({
         message: "Validation failed",
@@ -14,7 +17,12 @@ export const validate =
       });
     }
 
-    // Replaces req.body with cleaned data (trimmed, lowercased, phone normalised)
-    req.body = result.data;
+    if (source === "body") {
+      // Replaces req.body with cleaned data (trimmed, lowercased, phone normalised)
+      req.body = result.data;
+    } else {
+      // Query and params are stored on res.locals instead of being overwritten
+      res.locals[source] = result.data;
+    }
     return next();
   };
