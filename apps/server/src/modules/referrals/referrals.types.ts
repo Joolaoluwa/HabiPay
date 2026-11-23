@@ -1,7 +1,12 @@
 import { z } from "zod";
 import { propertyTypeEnum } from "../../db/schema/properties";
-import { referralStatusEnum } from "../../db/schema/landlord-referrals";
-import { money, ngPhone, paginationFields, requiredText } from "../../utils/validators";
+import { referralStatusEnum } from "../../db/schema/landlord-referral";
+import {
+  money,
+  ngPhone,
+  paginationFields,
+  requiredText,
+} from "../../utils/validators";
 
 // ─── Body schemas ─────────────────────────────────────────────────────────────
 
